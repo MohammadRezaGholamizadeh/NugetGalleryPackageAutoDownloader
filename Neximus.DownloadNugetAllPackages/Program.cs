@@ -13,15 +13,17 @@ class Program
         string rootFolder = @"D:\Downloaded Packages";
         Directory.CreateDirectory(rootFolder);
 
-        await DeleteHugePackages(rootFolder);
+        //await DeleteHugePackages(rootFolder);
 
-        //await DownloadPackages(rootFolder);
+        await DownloadPackages(rootFolder);
     }
+
 
     private static async Task DeleteHugePackages(string rootFolder)
     {
         var allDirectories = Directory.GetDirectories(rootFolder);
-        var text = "";
+        var clearedPackages = "";
+        var failedDeletionPackages = "";
 
         foreach (var directory in allDirectories)
         {
@@ -32,16 +34,31 @@ class Program
 
             if (allFiles.Any(_ => _.Length > 20 * 1024 * 1024))
             {
-                text += directory + Environment.NewLine;
                 var filesPathThatMustDelete = allFiles.Skip(5);
                 foreach (var file in filesPathThatMustDelete)
                 {
-                    File.Delete(file.FullName);
+                    try
+                    {
+                        File.Delete(file.FullName);
+                        clearedPackages += directory + Environment.NewLine;
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine($"File Deleted => {file.Name} .");
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+                    catch
+                    {
+                        failedDeletionPackages += directory + Environment.NewLine;
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"Deletion Failed => {file.Name} .");
+                        Console.ForegroundColor = ConsoleColor.White;
+                    }
+
                 }
             }
         }
 
-        File.WriteAllText(Path.Combine(rootFolder, "AllPackages.txt"), text);
+        File.WriteAllText(Path.Combine(rootFolder, "ClearedPackages.txt"), clearedPackages);
+        File.WriteAllText(Path.Combine(rootFolder, "FailedDeletionPackages.txt"), failedDeletionPackages);
     }
 
 
