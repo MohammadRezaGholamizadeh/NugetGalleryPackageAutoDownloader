@@ -4,7 +4,6 @@ using NuGet.Packaging.Core;
 using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
-using System.Net.Http;
 using System.Text.Json;
 
 class Program
@@ -23,13 +22,13 @@ class Program
 
         string[] searchTerms = new string[]
         {
-            "microsoft",
+            //"microsoft",
             //"system",
             //"extensions",
             //"aspnet",
             //"entityframework",
             //"json",
-            //"logging",
+            //"log",
             //"http",
             //"security",
             //"identity",
@@ -41,11 +40,19 @@ class Program
             //"polly",
             //"blazor",
             //"xunit"
+            "a"
         };
 
-        int maxResults = 1000;
-        long minDownloads = 100_000;
-        int batchSize = 200; // برای جلوگیری از JSON بزرگ
+        string[] excludeList = new string[]
+        {
+            "cef.redist.x86",
+            "cef.redist.x64",
+
+        };
+
+        int maxResults = 1000000;
+        long minDownloads = 8000000;
+        int batchSize = 100; // برای جلوگیری از JSON بزرگ
 
         foreach (var term in searchTerms)
         {
@@ -56,7 +63,7 @@ class Program
 
             while (totalFetched < maxResults)
             {
-                string url = $"https://api-v2v3search-0.nuget.org/query?q={term}&prerelease=true&take={batchSize}&skip={skip}&sortBy=downloads";
+                string url = $"https://api-v2v3search-0.nuget.org/query?q={term}&frameworks=net%2Cnetcoreapp%2Cnetstandard&includeComputedFrameworks=true&frameworkFilterMode=all&prerelease=true&take={batchSize}&skip={skip}&sortBy=downloads";
 
                 using var response = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
@@ -73,6 +80,8 @@ class Program
                     string packageId = pkg.GetProperty("id").GetString();
                     long downloadCount = pkg.GetProperty("totalDownloads").GetInt64();
 
+                    if (excludeList.Any(_ => _.Contains(packageId)))
+                        continue;
                     if (downloadCount < minDownloads)
                         continue;
 
@@ -84,7 +93,9 @@ class Program
                         var versionsJson = pkg.GetProperty("versions");
                         var selectedVersions = versionsJson.EnumerateArray()
                             .GroupBy(v => v.GetProperty("version").GetString().Split('.')[0])
-                            .Select(g => g.OrderByDescending(v => NuGetVersion.Parse(v.GetProperty("version").GetString())).First());
+                            .OrderByDescending(_ => _.First().GetProperty("version").GetString().Split('.')[0])
+                            .Select(g => g.OrderByDescending(v => NuGetVersion.Parse(v.GetProperty("version").GetString())).First())
+                            .ToList();
 
                         foreach (var v in selectedVersions)
                         {
