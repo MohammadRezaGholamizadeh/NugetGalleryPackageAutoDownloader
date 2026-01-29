@@ -13,6 +13,40 @@ class Program
         string rootFolder = @"D:\Downloaded Packages";
         Directory.CreateDirectory(rootFolder);
 
+        await DeleteHugePackages(rootFolder);
+
+        //await DownloadPackages(rootFolder);
+    }
+
+    private static async Task DeleteHugePackages(string rootFolder)
+    {
+        var allDirectories = Directory.GetDirectories(rootFolder);
+        var text = "";
+
+        foreach (var directory in allDirectories)
+        {
+            var allFiles =
+                Directory.GetFiles(directory)
+                         .Select(_ => new FileInfo(_))
+                         .OrderByDescending(_ => _.Name);
+
+            if (allFiles.Any(_ => _.Length > 20 * 1024 * 1024))
+            {
+                text += directory + Environment.NewLine;
+                var filesPathThatMustDelete = allFiles.Skip(5);
+                foreach (var file in filesPathThatMustDelete)
+                {
+                    File.Delete(file.FullName);
+                }
+            }
+        }
+
+        File.WriteAllText(Path.Combine(rootFolder, "AllPackages.txt"), text);
+    }
+
+
+    private static async Task DownloadPackages(string rootFolder)
+    {
         var sourceRepository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
         var downloadResource = await sourceRepository.GetResourceAsync<DownloadResource>();
 
