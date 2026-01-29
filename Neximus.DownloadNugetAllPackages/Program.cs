@@ -95,10 +95,24 @@ class Program
                             .GroupBy(v => v.GetProperty("version").GetString().Split('.')[0])
                             .OrderByDescending(_ => _.First().GetProperty("version").GetString().Split('.')[0])
                             .Select(g => g.OrderByDescending(v => NuGetVersion.Parse(v.GetProperty("version").GetString())).First())
+                            .Take(10)
                             .ToList();
-
+                        var isbigsize = false;
+                        var downloadedCount = 0;
                         foreach (var v in selectedVersions)
                         {
+                            if (isbigsize && downloadedCount == 3)
+                                continue;
+                            var greatestDownloadedPackage = Directory.GetFiles(packageFolder).Select(_ => new FileInfo(_)).OrderByDescending(_ => _.Length).FirstOrDefault();
+                            if (greatestDownloadedPackage != null)
+                            {
+                                if (greatestDownloadedPackage.Length > 20 * 1024 * 1024)
+                                {
+                                    isbigsize = true;
+                                    downloadedCount += 1;
+                                }
+                            }
+
                             string versionStr = v.GetProperty("version").GetString();
                             try
                             {
