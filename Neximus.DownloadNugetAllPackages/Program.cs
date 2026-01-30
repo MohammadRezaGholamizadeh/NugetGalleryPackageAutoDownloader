@@ -13,9 +13,9 @@ class Program
         string rootFolder = @"D:\Downloaded Packages";
         Directory.CreateDirectory(rootFolder);
 
-        //await DeleteHugePackages(rootFolder);
+        await DeleteHugePackages(rootFolder);
 
-        await DownloadPackages(rootFolder);
+        //await DownloadPackages(rootFolder);
     }
 
 
@@ -32,7 +32,7 @@ class Program
                          .Select(_ => new FileInfo(_))
                          .OrderByDescending(_ => _.Name);
 
-            if (allFiles.Any(_ => _.Length > 20 * 1024 * 1024))
+            if (allFiles.Any(_ => _.Length > 22 * 1024 * 1024))
             {
                 var filesPathThatMustDelete = allFiles.Skip(5);
                 foreach (var file in filesPathThatMustDelete)
@@ -73,26 +73,33 @@ class Program
 
         string[] searchTerms = new string[]
         {
-            //"microsoft",
-            //"system",
-            //"extensions",
-            //"aspnet",
-            //"entityframework",
-            //"json",
-            //"log",
-            //"http",
-            //"security",
-            //"identity",
-            //"newtonsoft",
-            //"serilog",
-            //"dapper",
-            //"automapper",
-            //"mediatr",
-            //"polly",
-            //"blazor",
-            //"xunit"
-            "a"
-        };
+            //"a",
+            //"b",
+            //"c",
+            //"d",
+            //"e",
+            //"f",
+            //"g",
+            //"h",
+            //"i",
+            //"j",
+            //"k",
+            //"l",
+            //"m",
+            //"n",
+            //"o",
+            //"p",
+            //"q",
+            //"r",
+            //"s",
+            //"t",
+            //"u",
+            //"v",
+            //"w",
+            //"x",
+            //"y",
+            //"z",
+            };
 
         string[] excludeList = new string[]
         {
@@ -103,7 +110,7 @@ class Program
 
         int maxResults = 1000000;
         long minDownloads = 8000000;
-        int batchSize = 100; // برای جلوگیری از JSON بزرگ
+        int batchSize = 50; // برای جلوگیری از JSON بزرگ
 
         foreach (var term in searchTerms)
         {
@@ -128,6 +135,7 @@ class Program
 
                 foreach (var pkg in packages)
                 {
+                    var FoundPackagesCount = packages.Count();
                     string packageId = pkg.GetProperty("id").GetString();
                     long downloadCount = pkg.GetProperty("totalDownloads").GetInt64();
 
@@ -152,7 +160,7 @@ class Program
                         var downloadedCount = 0;
                         foreach (var v in selectedVersions)
                         {
-                            if (isbigsize && downloadedCount == 3)
+                            if (isbigsize && downloadedCount == 2)
                                 continue;
                             var greatestDownloadedPackage = Directory.GetFiles(packageFolder).Select(_ => new FileInfo(_)).OrderByDescending(_ => _.Length).FirstOrDefault();
                             if (greatestDownloadedPackage != null)
